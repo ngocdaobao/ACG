@@ -52,7 +52,7 @@ class ServerConfig:
     use_sim_policy_wrapper: bool = False
     """Whether to use the sim policy wrapper"""
 
-    use_acg_guidance: bool = False
+    use_acg_guidance: bool = True
     """Whether to modify the policy to use ACG guidance"""
 
 def modified_policy_for_acg(policy: Gr00tPolicy):

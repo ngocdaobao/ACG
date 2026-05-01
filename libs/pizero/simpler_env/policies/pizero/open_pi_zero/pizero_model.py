@@ -7,7 +7,7 @@ import sys
 sys.path.append(osp.join(osp.dirname(__file__), 'open_pi_zero'))
 from src.model.vla.pizero import PiZero
 
-from .. import setup_torch_seed
+from ... import setup_torch_seed
 
 
 def load_checkpoint(model, path):

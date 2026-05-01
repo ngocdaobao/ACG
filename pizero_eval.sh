@@ -1,5 +1,6 @@
 num_gpus=1
-result_root="./results/default/baseline"
+guidance_type="acg"
+result_root="output_pizero/$guidance_type"
 
 policies=("pizero")
 checkpoints=("pretrained/open-pi-zero")
@@ -26,7 +27,7 @@ for i in "${!policies[@]}"; do
             --num_gpus $num_gpus \
             --result_root "$result_root" \
             --use_guidance \
-            --guidance_type "acg" \
+            --guidance_type "$guidance_type" \
             --guidance_scale 3.0 \
             --n-trajs 50 \
     done

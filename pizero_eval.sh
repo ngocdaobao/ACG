@@ -24,11 +24,11 @@ for i in "${!policies[@]}"; do
             --policy "${policies[$i]}" \
             --checkpoint "${checkpoints[$i]}" \
             --task "$task" \
-            --num_gpus $num_gpus \
-            --result_root "$result_root" \
+            --num-gpus $num_gpus \
+            --result-root "$result_root" \
             --use_guidance \
             --guidance_type "$guidance_type" \
             --guidance_scale 3.0 \
-            --n-trajs 50 \
+            --n-trajs 50
     done
 done

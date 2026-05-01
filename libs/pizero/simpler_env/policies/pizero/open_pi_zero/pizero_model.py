@@ -8,9 +8,17 @@ import numpy as np
 import torch
 from omegaconf import OmegaConf
 
-# This file lives INSIDE open_pi_zero/, so add its own directory to sys.path
-# so `from src.model.vla.pizero import PiZero` resolves.
-sys.path.append(osp.dirname(__file__))
+# This file lives INSIDE open_pi_zero/. We need THREE paths on sys.path so all
+# Hydra _target_ strings in bridge.yaml / fractal.yaml resolve:
+#   - open_pi_zero/                           -> `from src.model... import ...`
+#   - .../pizero/        (parent)             -> `open_pi_zero.src.model...`
+#   - .../libs/pizero/   (great-grandparent)  -> `simpler_env.policies.pizero...`
+_OPEN_PI_ZERO_DIR = osp.dirname(osp.abspath(__file__))
+_PIZERO_POLICY_DIR = osp.dirname(_OPEN_PI_ZERO_DIR)            # .../pizero/
+_LIBS_PIZERO_DIR = osp.dirname(osp.dirname(osp.dirname(_PIZERO_POLICY_DIR)))  # .../libs/pizero/
+for _p in (_OPEN_PI_ZERO_DIR, _PIZERO_POLICY_DIR, _LIBS_PIZERO_DIR):
+    if _p not in sys.path:
+        sys.path.append(_p)
 from src.model.vla.pizero import PiZero
 
 

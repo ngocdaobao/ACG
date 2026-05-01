@@ -63,6 +63,12 @@ export VIRTUAL_ENV="$VENV_DIR"
 echo "[4/7] Installing open_pi_zero (-e) and its deps..."
 uv pip install -e "$OPEN_PI_ZERO_DIR"
 
+# Fix tensorflow 2.15 / protobuf mismatch: tf imports
+# `from google.protobuf.internal import builder` which is missing on some
+# protobuf 3.20.x builds shipped via deps. Force a known-good version.
+echo "      Pinning protobuf==3.20.3 to fix tf attr_value_pb2 import..."
+uv pip install --force-reinstall 'protobuf==3.20.3'
+
 # --- 4. SimplerEnv + ManiSkill2_real2sim ----------------------------------
 if [ ! -d "$SIMPLER_ENV_DIR" ]; then
   echo "[5/7] Cloning allenzren/SimplerEnv (with submodules)..."

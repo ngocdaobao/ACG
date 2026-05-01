@@ -21,6 +21,23 @@ for _p in (_OPEN_PI_ZERO_DIR, _PIZERO_POLICY_DIR, _LIBS_PIZERO_DIR):
         sys.path.append(_p)
 from src.model.vla.pizero import PiZero
 
+# Pre-import every module referenced by `_target_` strings in
+# config/eval/{bridge,fractal}.yaml so they are cached in sys.modules.
+# Hydra's `_locate("src.X.Y")` then succeeds via the cache, sidestepping
+# namespace-package quirks where `import_module("src")` returns a partial
+# namespace object on which `getattr(..., 'model')` may not auto-import.
+import importlib as _importlib
+for _mod in (
+    "src.agent.eval",
+    "src.model.paligemma.siglip",
+    "src.model.vla.joint_model",
+    "simpler_env.policies.pizero.simpler_adapter",
+):
+    try:
+        _importlib.import_module(_mod)
+    except ModuleNotFoundError:
+        pass  # let hydra report the real failure if any are genuinely missing
+
 
 def setup_torch_seed(seed):
     torch.manual_seed(seed)

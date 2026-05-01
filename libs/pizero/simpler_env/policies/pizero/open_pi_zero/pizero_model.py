@@ -1,13 +1,28 @@
 import hydra
+import os
 import os.path as osp
+import random
+import sys
+
+import numpy as np
 import torch
 from omegaconf import OmegaConf
 
-import sys
-sys.path.append(osp.join(osp.dirname(__file__), 'open_pi_zero'))
+# This file lives INSIDE open_pi_zero/, so add its own directory to sys.path
+# so `from src.model.vla.pizero import PiZero` resolves.
+sys.path.append(osp.dirname(__file__))
 from src.model.vla.pizero import PiZero
 
-from ... import setup_torch_seed
+
+def setup_torch_seed(seed):
+    torch.manual_seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
 
 
 def load_checkpoint(model, path):

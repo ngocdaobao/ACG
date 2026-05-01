@@ -11,6 +11,7 @@ uv pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url ht
 
 # Install core dependencies
 uv pip install -e libs/Isaac-GR00T-N1
+# uv pip install --no-index --no-deps flash_attn-2.8.3+cu128torch2.7-cp310-cp310-linux_x86_64.whl
 uv pip install --no-build-isolation flash-attn==2.8.3
 
 # Robosuite and RoboCasa

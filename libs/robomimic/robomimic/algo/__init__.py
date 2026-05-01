@@ -12,5 +12,5 @@ from robomimic.algo.td3_bc import TD3_BC
 from robomimic.algo.diffusion_policy import DiffusionPolicyUNet
 from robomimic.algo.act import ACT
 from robomimic.algo.gr00t_robomimic import GR00T_Robomimic
-# from robomimic.algo.gr00t_guidance import GR00T_Guidance_Robomimic
+from robomimic.algo.gr00t_guidance import GR00T_Guidance_Robomimic
 # from robomimic.algo.gr00t_guidance_dexmg import GR00T_Guidance_DexMG_Robomimic

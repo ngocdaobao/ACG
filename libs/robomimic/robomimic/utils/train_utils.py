@@ -359,6 +359,7 @@ def run_rollout(
                 ac = policy(ob=policy_ob, goal=goal_dict)  # , return_ob=True)
 
         # play action
+        print(f"Action Shape: {ac.shape}")
         ob_dict, r, done, info = env.step(ac)
 
         # render to screen

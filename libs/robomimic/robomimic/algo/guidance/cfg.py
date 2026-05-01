@@ -95,7 +95,7 @@ class GR00T_N1_CFG(GR00T_N1):
         self.validate_data(action_head_outputs, backbone_outputs, is_training=False)
         return action_head_outputs
 
-
+ 
 class FlowmatchingActionHead_CFG(FlowmatchingActionHead):
 
     @torch.no_grad()

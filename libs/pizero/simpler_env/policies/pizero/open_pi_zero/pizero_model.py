@@ -35,8 +35,15 @@ for _mod in (
 ):
     try:
         _importlib.import_module(_mod)
-    except ModuleNotFoundError:
-        pass  # let hydra report the real failure if any are genuinely missing
+    except Exception as _e:
+        # Surface the underlying error instead of letting Hydra report a
+        # misleading "could not locate target". Comment out this raise (and
+        # restore `except ModuleNotFoundError: pass`) once the cause is fixed
+        # if you want the warmup to be best-effort again.
+        import traceback as _tb
+        print(f"[pizero_model] WARMUP FAILED for {_mod!r}: {type(_e).__name__}: {_e}")
+        _tb.print_exc()
+        raise
 
 
 def setup_torch_seed(seed):

@@ -278,7 +278,7 @@ class ParallelRunner:
         if show_detail:
             self.logger.infos("Policy Config", config)
 
-        from ACG.libs.pizero.simpler_env.policies.pizero.open_pi_zero.pizero_model import PiZeroInference
+        from pizero_model import PiZeroInference
         policy = PiZeroInference(self.guidance, **config)
         
         reset_logging()

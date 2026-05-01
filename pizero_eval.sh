@@ -28,3 +28,4 @@ for i in "${!policies[@]}"; do
             --n-trajs 50
     done
 done
+

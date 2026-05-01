@@ -131,7 +131,14 @@ class PiZeroInference:
                     guidance['skip_blocks'], guidance['noise_std'],
                 )
 
-        if use_torch_compile:
+        # torch.compile (a) doesn't compose with the runtime monkey-patching
+        # done by acg/cfg/wng guidance, and (b) requires triton>=3.0 whose
+        # `triton.backends` is unavailable in this venv (we pinned triton<3.0
+        # for bitsandbytes<0.45). Skip compile when guidance is active.
+        _guidance_active = (
+            guidance is not None and guidance.get('type') in ('acg', 'cfg', 'wng')
+        )
+        if use_torch_compile and not _guidance_active:
             self.model = torch.compile(self.model, mode='default')
         self.model.eval()
 

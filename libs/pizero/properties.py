@@ -67,7 +67,7 @@ CONTRAST_OPEN_PIZERO_CONFIG = dict(
     keep_threshold=0.5,
 )
 
-def get_policy_config(policy, checkpoint, task, opts, contrast):
+def get_policy_config(policy, checkpoint, task, opts):
     if policy == 'rt1':
         config = RT1_CONFIG
         config['saved_model_path'] = checkpoint
@@ -90,18 +90,6 @@ def get_policy_config(policy, checkpoint, task, opts, contrast):
         config['policy_setup'] = 'widowx_bridge'
     else:
         raise NotImplementedError
-
-    # update config if contrast policy is used
-    if contrast:
-        from properties import CONTRAST_OCTO_CONFIG, CONTRAST_OPENVLA_CONFIG
-        if policy == 'octo':
-            config.update(CONTRAST_OCTO_CONFIG)
-        elif policy == 'openvla':
-            config.update(CONTRAST_OPENVLA_CONFIG)
-        elif policy == 'pizero':
-            config.update(CONTRAST_OPEN_PIZERO_CONFIG)
-        else:
-            raise NotImplementedError()
     
     # update opts
     for k, v in opts.items():
@@ -110,10 +98,3 @@ def get_policy_config(policy, checkpoint, task, opts, contrast):
     
     return config
 
-
-def get_contrast_image_generator_config(opts):
-    config = CONTRAST_IMAGE_CONFIG
-    for k, v in opts.items():
-        if k in config:
-            config[k] = v
-    return config

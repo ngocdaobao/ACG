@@ -99,18 +99,37 @@ class PiZeroInference:
         self.model.to(self.dtype)
         self.model.to(self.device)
         
-        if guidance is not None:
+        if guidance is not None and guidance.get('type') in ('acg', 'cfg', 'wng'):
+            # Load the guidance modules directly from file to avoid triggering
+            # robomimic/__init__.py -> robomimic/algo/__init__.py, which pulls
+            # in `transformers.AutoModel` etc. that the pizero venv can't load.
+            import importlib.util as _ilu
+            _GUIDANCE_DIR = osp.join(
+                _LIBS_PIZERO_DIR, "..", "robomimic", "robomimic", "algo", "guidance"
+            )
+            _GUIDANCE_DIR = osp.normpath(_GUIDANCE_DIR)
+
+            def _load_guidance(name):
+                spec = _ilu.spec_from_file_location(
+                    name, osp.join(_GUIDANCE_DIR, f"{name}.py")
+                )
+                mod = _ilu.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                return mod
+
             if guidance['type'] == 'acg':
-                from robomimic.robomimic.algo.guidance.acg_pizero import apply_acg_to_pizero
-                apply_acg_to_pizero(self.model, guidance['scale'], guidance['skip_blocks'])
+                _load_guidance("acg_pizero").apply_acg_to_pizero(
+                    self.model, guidance['scale'], guidance['skip_blocks'],
+                )
             elif guidance['type'] == 'cfg':
-                from robomimic.robomimic.algo.guidance.cfg_pizero import apply_cfg_to_pizero
-                apply_cfg_to_pizero(self.model, guidance['scale'])
+                _load_guidance("cfg_pizero").apply_cfg_to_pizero(
+                    self.model, guidance['scale'],
+                )
             elif guidance['type'] == 'wng':
-                from robomimic.robomimic.algo.guidance.white_noise_pizero import apply_white_noise_to_pizero
-                apply_white_noise_to_pizero(self.model, guidance['scale'],
-                                            guidance['skip_blocks'],
-                                            guidance['noise_std'])
+                _load_guidance("white_noise_pizero").apply_white_noise_to_pizero(
+                    self.model, guidance['scale'],
+                    guidance['skip_blocks'], guidance['noise_std'],
+                )
 
         if use_torch_compile:
             self.model = torch.compile(self.model, mode='default')

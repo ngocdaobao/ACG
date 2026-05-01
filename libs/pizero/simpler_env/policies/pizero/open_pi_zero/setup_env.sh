@@ -69,6 +69,22 @@ uv pip install -e "$OPEN_PI_ZERO_DIR"
 echo "      Pinning protobuf==3.20.3 to fix tf attr_value_pb2 import..."
 uv pip install --force-reinstall 'protobuf==3.20.3'
 
+# bitsandbytes >= 0.45 uses torch.library.impl_abstract which was removed in
+# torch 2.5; pin to the last release compatible with torch==2.5.0.
+echo "      Pinning bitsandbytes<0.45 (torch 2.5 compat)..."
+uv pip install --force-reinstall 'bitsandbytes<0.45'
+
+# bitsandbytes/other reinstalls can pull in numpy 2.x and a matching ml_dtypes
+# that crashes tensorflow 2.15 (`numpy.core._multiarray_umath failed to import`).
+# Re-pin numpy and ml_dtypes to versions tf 2.15 was built against.
+echo "      Re-pinning numpy==1.26.4 and ml_dtypes==0.2.0 (tf 2.15 compat)..."
+uv pip install --force-reinstall 'numpy==1.26.4' 'ml_dtypes==0.2.0'
+
+# bitsandbytes<0.45 imports `triton.ops` which was removed in triton 3.0
+# (the version torch 2.5 pulls in). Pin triton<3.0 to keep the bnb import path.
+echo "      Pinning triton<3.0 (bitsandbytes<0.45 needs triton.ops)..."
+uv pip install --force-reinstall 'triton<3.0'
+
 # --- 4. SimplerEnv + ManiSkill2_real2sim ----------------------------------
 if [ ! -d "$SIMPLER_ENV_DIR" ]; then
   echo "[5/7] Cloning allenzren/SimplerEnv (with submodules)..."

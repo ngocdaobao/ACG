@@ -20,7 +20,7 @@ for i in "${!policies[@]}"; do
     for task in "${tasks[@]}"; do
         echo "Running inference for ${policies[$i]} on $task"
 
-        python parallel_inference.py \
+        python libs/pizero/parallel_inference.py \
             --policy "${policies[$i]}" \
             --checkpoint "${checkpoints[$i]}" \
             --task "$task" \

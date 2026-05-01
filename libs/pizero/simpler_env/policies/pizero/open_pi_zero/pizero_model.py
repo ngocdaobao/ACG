@@ -100,14 +100,11 @@ class PiZeroInference:
         self.model.to(self.device)
         
         if guidance is not None and guidance.get('type') in ('acg', 'cfg', 'wng'):
-            # Load the guidance modules directly from file to avoid triggering
-            # robomimic/__init__.py -> robomimic/algo/__init__.py, which pulls
-            # in `transformers.AutoModel` etc. that the pizero venv can't load.
+            # Guidance modules are standalone files (only depend on torch and
+            # src.model.vla.pizero). Loaded by file path so we never trigger any
+            # `robomimic` package import chain.
             import importlib.util as _ilu
-            _GUIDANCE_DIR = osp.join(
-                _LIBS_PIZERO_DIR, "..", "robomimic", "robomimic", "algo", "guidance"
-            )
-            _GUIDANCE_DIR = osp.normpath(_GUIDANCE_DIR)
+            _GUIDANCE_DIR = osp.join(_PIZERO_POLICY_DIR, "guidance")
 
             def _load_guidance(name):
                 spec = _ilu.spec_from_file_location(

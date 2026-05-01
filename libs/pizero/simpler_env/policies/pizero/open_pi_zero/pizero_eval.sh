@@ -12,6 +12,8 @@ tasks=(
     # "google_robot_place_apple_in_closed_top_drawer"
 )
 
+export PYTHONPATH="$PWD/libs/pizero:$PYTHONPATH"
+
 for i in "${!policies[@]}"; do
     for task in "${tasks[@]}"; do
         echo "Running inference for ${policies[$i]} on $task"

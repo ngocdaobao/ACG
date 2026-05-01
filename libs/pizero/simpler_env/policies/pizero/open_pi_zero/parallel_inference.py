@@ -272,7 +272,7 @@ class ParallelRunner:
     
     def _build_policy(self, show_detail=False):
         """ Build policy model. """
-        from ACG.libs.pizero.simpler_env.policies.pizero.open_pi_zero.properties import get_policy_config
+        from properties import get_policy_config
         config = get_policy_config(self.policy, self.checkpoint, self.task, self.opts)
         
         if show_detail:

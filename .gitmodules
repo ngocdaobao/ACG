@@ -1,0 +1,3 @@
+[submodule "libs/Isaac_GR00T_n1d6/external_dependencies/robocasa"]
+	path = libs/Isaac_GR00T_n1d6/external_dependencies/robocasa
+	url = https://github.com/robocasa/robocasa

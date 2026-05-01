@@ -48,20 +48,20 @@ class PiZeroInference:
         self.use_naive = use_naive
         
         if policy_setup == "widowx_bridge":
-            cfg = OmegaConf.load(osp.join(cfg_dir, 'bridge.yaml'))
+            cfg = OmegaConf.load('config/eval/bridge.yaml')
             if flow_sampling == 'beta':
-                checkpoint_path = osp.join(checkpoint_path, 'bridge_beta_step19296_2024-12-26_22-30_42.pt')
+                checkpoint_path = ('config/eval/bridge_beta_step19296_2024-12-26_22-30_42.pt')
             elif flow_sampling == 'uniform':
-                checkpoint_path = osp.join(checkpoint_path, 'bridge_uniform_step19296_2024-12-26_22-31_42.pt')
+                checkpoint_path = ('config/eval/bridge_uniform_step19296_2024-12-26_22-31_42.pt')
             else:
                 raise ValueError(f"Invalid flow_sampling: {flow_sampling}")
             
         elif policy_setup == "google_robot":
-            cfg = OmegaConf.load(osp.join(cfg_dir, 'fractal.yaml'))
+            cfg = OmegaConf.load('config/eval/fractal.yaml')
             if flow_sampling == 'beta':
-                checkpoint_path = osp.join(checkpoint_path, 'fractal_beta_step29576_2024-12-29_13-10_42.pt')
+                checkpoint_path = ('config/eval/fractal_beta_step29576_2024-12-29_13-10_42.pt')
             elif flow_sampling == 'uniform':
-                checkpoint_path = osp.join(checkpoint_path, 'fractal_uniform_step29576_2024-12-31_22-26_42.pt')
+                checkpoint_path = ('config/eval/fractal_uniform_step29576_2024-12-31_22-26_42.pt')
             else:
                 raise ValueError(f"Invalid flow_sampling: {flow_sampling}")
         

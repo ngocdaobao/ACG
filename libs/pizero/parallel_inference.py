@@ -33,7 +33,6 @@ class ParallelRunner:
         - task: task name
         - result_root: root directory to save results
         - n_trajs: number of episodes
-        - contrast: whether to use contrast
         - opts: other options
     """
     
@@ -45,7 +44,6 @@ class ParallelRunner:
                  task='',
                  result_root='./results',
                  n_trajs=100,
-                 contrast=False,
                  opts=[]):
         self.num_gpus = num_gpus
         self.policy = policy
@@ -53,7 +51,6 @@ class ParallelRunner:
         self.task = task
         self.result_root = result_root
         self.n_trajs = n_trajs
-        self.contrast = contrast
         self.opts = parse_opts(opts)
         self.guidance = guidance
         
@@ -247,7 +244,6 @@ class ParallelRunner:
         Build episode:
             1. Set GPU
             2. Build environment
-            3. Build contrast image generator if contrast is used
             4. Build policy
             5. Build others
         Return:
@@ -277,7 +273,7 @@ class ParallelRunner:
     def _build_policy(self, show_detail=False):
         """ Build policy model. """
         from properties import get_policy_config
-        config = get_policy_config(self.policy, self.checkpoint, self.task, self.opts, self.contrast)
+        config = get_policy_config(self.policy, self.checkpoint, self.task, self.opts)
         
         if show_detail:
             self.logger.infos("Policy Config", config)
@@ -357,7 +353,6 @@ def main(args):
                             task=args.task,
                             result_root=args.result_root,
                             n_trajs=args.n_trajs,
-                            contrast=args.contrast,
                             opts=args.opts)
     runner.run()
 

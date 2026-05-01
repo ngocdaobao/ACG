@@ -8,9 +8,9 @@ import torch
 from simpler_env.utils.env.observation_utils import get_image_from_maniskill2_obs_dict
 from transformers import AutoTokenizer
 
-from open_pi_zero.src.agent.env_adapter.base import BaseEnvAdapter
-from open_pi_zero.src.model.vla.processing import VLAProcessor
-from open_pi_zero.src.utils.geometry import euler2axangle, mat2euler, quat2mat
+from src.agent.env_adapter.base import BaseEnvAdapter
+from src.model.vla.processing import VLAProcessor
+from src.utils.geometry import euler2axangle, mat2euler, quat2mat
 
 
 class SimplerAdapter(BaseEnvAdapter):

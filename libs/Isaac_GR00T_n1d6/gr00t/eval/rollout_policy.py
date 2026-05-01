@@ -2,10 +2,26 @@ import argparse
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import partial
+import logging
 from pathlib import Path
 import time
 from typing import Any
 import uuid
+
+logger = logging.getLogger(__name__)
+
+
+def setup_logger(log_file: str | None = None) -> None:
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    if log_file:
+        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+        handlers.append(logging.FileHandler(log_file))
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        handlers=handlers,
+    )
+
 
 from gr00t.data.embodiment_tags import EmbodimentTag
 from gr00t.eval.sim.env_utils import get_embodiment_tag_from_env_name
@@ -267,6 +283,7 @@ def run_rollout_gymnasium_policy(
     wrapper_configs: WrapperConfigs,
     n_episodes: int = 10,
     n_envs: int = 1,
+    seed: int = 42,
 ) -> Any:
     """Run policy rollouts in parallel environments.
 
@@ -282,7 +299,7 @@ def run_rollout_gymnasium_policy(
     """
     start_time = time.time()
     n_episodes = max(n_episodes, n_envs)
-    print(f"Running collecting {n_episodes} episodes for {env_name} with {n_envs} vec envs")
+    logger.info(f"Running collecting {n_episodes} episodes for {env_name} with {n_envs} vec envs")
 
     env_fns = [
         partial(
@@ -314,7 +331,7 @@ def run_rollout_gymnasium_policy(
     episode_infos = defaultdict(list)
 
     # Initial reset
-    observations, _ = env.reset()
+    observations, _ = env.reset(seed=seed)
     policy.reset()
     i = 0
 
@@ -390,7 +407,7 @@ def run_rollout_gymnasium_policy(
 
     env.reset()
     env.close()
-    print(f"Collecting {n_episodes} episodes took {time.time() - start_time} seconds")
+    logger.info(f"Collecting {n_episodes} episodes took {time.time() - start_time:.1f} seconds")
 
     assert len(episode_successes) >= n_episodes, (
         f"Expected at least {n_episodes} episodes, got {len(episode_successes)}"
@@ -417,6 +434,7 @@ def create_gr00t_sim_policy(
     embodiment_tag: EmbodimentTag,
     policy_client_host: str = "",
     policy_client_port: int | None = None,
+
 ) -> BasePolicy:
     from gr00t.policy.gr00t_policy import Gr00tPolicy, Gr00tSimPolicyWrapper
 
@@ -432,6 +450,7 @@ def create_gr00t_sim_policy(
                 device=0,
             )
         )
+
     return policy
 
 
@@ -439,22 +458,18 @@ def run_gr00t_sim_policy(
     env_name: str,
     n_episodes: int,
     max_episode_steps: int,
+    video_dir: str,
     model_path: str = "",
     policy_client_host: str = "",
     policy_client_port: int | None = None,
     n_envs: int = 8,
     n_action_steps: int = 8,
+    seed: int = 42,
 ):
     embodiment_tag = get_embodiment_tag_from_env_name(env_name)
 
-    if model_path:
-        video_dir = (
-            f"/tmp/sim_eval_videos_{model_path.replace('/', '_')}_ac{n_action_steps}_{uuid.uuid4()}"
-        )
-    else:
-        video_dir = (
-            f"/tmp/sim_eval_videos_{env_name.replace('/', '_')}_ac{n_action_steps}_{uuid.uuid4()}"
-        )
+    video_dir = video_dir
+    setup_logger(f"{video_dir}/eval.log")
     wrapper_configs = WrapperConfigs(
         video=VideoConfig(
             video_dir=video_dir,
@@ -468,7 +483,7 @@ def run_gr00t_sim_policy(
     )
 
     policy = create_gr00t_sim_policy(
-        model_path, embodiment_tag, policy_client_host, policy_client_port
+        model_path, embodiment_tag, policy_client_host, policy_client_port, 
     )
 
     results = run_rollout_gymnasium_policy(
@@ -477,8 +492,9 @@ def run_gr00t_sim_policy(
         wrapper_configs=wrapper_configs,
         n_episodes=n_episodes,
         n_envs=n_envs,
+        seed=seed,
     )
-    print("Video saved to: ", wrapper_configs.video.video_dir)
+    logger.info(f"Video saved to: {wrapper_configs.video.video_dir}")
     return results
 
 
@@ -501,6 +517,8 @@ if __name__ == "__main__":
     parser.add_argument("--n_envs", type=int, default=8)
     parser.add_argument("--n_action_steps", type=int, default=8)
 
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--video_dir", type=str, default="rollout_videos")
     args = parser.parse_args()
 
     # validate policy configuration
@@ -522,6 +540,8 @@ if __name__ == "__main__":
         policy_client_port=args.policy_client_port,
         n_envs=args.n_envs,
         n_action_steps=args.n_action_steps,
+        seed=args.seed,
+        video_dir=args.video_dir,
     )
-    print("results: ", results)
-    print("success rate: ", np.mean(results[1]))
+    logger.info(f"results: {results}")
+    logger.info(f"success rate: {np.mean(results[1]):.4f}")

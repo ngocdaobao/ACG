@@ -4,7 +4,7 @@ This module provides the core policy classes for running Gr00t models:
 - Gr00tPolicy: Base policy class for model inference
 - Gr00tSimPolicyWrapper: Wrapper for compatibility with existing Gr00t simulation environments
 """
-
+ 
 from pathlib import Path
 from typing import Any
 
@@ -369,7 +369,7 @@ class Gr00tPolicy(BasePolicy):
                 - T: action horizon (number of future action steps)
                 - D: action dimension (e.g., joint positions, velocities, gripper state)
 
-        Args:
+        Args: 
             action: Dictionary containing action arrays for each action key
 
         Raises:

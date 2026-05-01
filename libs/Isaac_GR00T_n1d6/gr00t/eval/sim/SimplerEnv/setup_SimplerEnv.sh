@@ -70,7 +70,9 @@ PY
 
 echo "SimplerEnv ready at: $UV_ENV/.venv/bin/python3"
 
-
+/user/hominhduy.nguyen01/u24877/.cache/uv/archive-v0/v7Kers2dgs_aDbfY6KAck/glfw/x11                            
+/user/hominhduy.nguyen01/u24877/.cache/uv/archive-v0/z0iNT9k-YyYFXYM6R4QXv/OpenGL/EGL/EXT/platform_x11.py      
+/user/hominhduy.nguyen01/u24877/.cache/uv/archive-v0/z0iNT9k-YyYFXYM6R4QXv/OpenGL/EGL/KHR/platform_x11.py  
 ## STUFF I ADDED MANUALLY
 
 

@@ -9,11 +9,12 @@ from gr00t.data.embodiment_tags import EmbodimentTag
 from gr00t.policy.gr00t_policy import Gr00tPolicy
 from gr00t.policy.replay_policy import ReplayPolicy
 from gr00t.policy.server_client import PolicyServer
+import torch
 import tyro
 import types
  
 DEFAULT_MODEL_SERVER_PORT = 5555
-
+ 
  
 @dataclass
 class ServerConfig:
@@ -52,31 +53,78 @@ class ServerConfig:
     use_sim_policy_wrapper: bool = False
     """Whether to use the sim policy wrapper"""
 
-    use_acg_guidance: bool = True
+    use_acg_guidance: bool = False
     """Whether to modify the policy to use ACG guidance"""
 
-def modified_policy_for_acg(policy: Gr00tPolicy):
+    use_guidance: bool = False
+
+    guidance: str = None
+
+
+def modified_policy(policy: Gr00tPolicy, guidance: str='acg'):
     """
         Modify the given GR00T-N1.6 policy to use the ACG guidance method. 
         This is done by replacing the get_action method of the policy and its model with the ACG versions.
     """
-    try:
-        acg_module = importlib.import_module("robomimic.algo.guidance.acg_grootn1d6")
-    except ImportError:
-        # Support running this file directly by adding sibling libs/robomimic.
-        robomimic_repo = Path(__file__).resolve().parents[2].parent / "robomimic"
-        if str(robomimic_repo) not in sys.path:
-            sys.path.insert(0, str(robomimic_repo))
+    if guidance=='acg':
+        try: 
+            guidance_module = importlib.import_module("robomimic.algo.guidance.acg_grootn1d6")
+        except ImportError:
+            # Support running this file directly by adding sibling libs/robomimic.
+            robomimic_repo = Path(__file__).resolve().parents[2].parent / "robomimic"
+            if str(robomimic_repo) not in sys.path:
+                sys.path.insert(0, str(robomimic_repo))
         acg_module = importlib.import_module("robomimic.algo.guidance.acg_grootn1d6")
 
-    GR00T_N1d6_ACG = acg_module.GR00T_N1d6_ACG
-    Gr00tN1d6ActionHead_ACG = acg_module.Gr00tN1d6ActionHead_ACG
-    Gr00t_N1d6_Policy_ACG = acg_module.Gr00t_N1d6_Policy_ACG
+        GR00T_N1d6_ACG = acg_module.GR00T_N1d6_ACG
+        Gr00tN1d6ActionHead_ACG = acg_module.Gr00tN1d6ActionHead_ACG
+        Gr00t_N1d6_Policy_ACG = acg_module.Gr00t_N1d6_Policy_ACG
 
-    policy.get_action = types.MethodType(Gr00t_N1d6_Policy_ACG.get_action, policy)
-    policy.model.get_action = types.MethodType(GR00T_N1d6_ACG.get_action, policy.model)
-    policy.model.action_head.get_action_with_features = types.MethodType(Gr00tN1d6ActionHead_ACG.get_action_with_features, policy.model.action_head)
-    policy.model.action_head.get_action = types.MethodType(Gr00tN1d6ActionHead_ACG.get_action, policy.model.action_head)
+        policy._get_action = types.MethodType(Gr00t_N1d6_Policy_ACG._get_action, policy)
+        policy.get_action = types.MethodType(Gr00t_N1d6_Policy_ACG.get_action, policy)
+        policy.model.get_action = types.MethodType(GR00T_N1d6_ACG.get_action, policy.model)
+        policy.model.action_head.get_action_with_features = types.MethodType(Gr00tN1d6ActionHead_ACG.get_action_with_features, policy.model.action_head)
+        policy.model.action_head.get_action = types.MethodType(Gr00tN1d6ActionHead_ACG.get_action, policy.model.action_head)
+
+    if guidance=='cfg':
+        try: 
+            guidance_module = importlib.import_module("robomimic.algo.guidance.cfg_grootn1d6")
+        except ImportError:
+            # Support running this file directly by adding sibling libs/robomimic.
+            robomimic_repo = Path(__file__).resolve().parents[2].parent / "robomimic"
+            if str(robomimic_repo) not in sys.path:
+                sys.path.insert(0, str(robomimic_repo))
+        cfg_module = importlib.import_module("robomimic.algo.guidance.cfg_grootn1d6")
+
+        GR00T_N1d6_CFG = cfg_module.GR00T_N1d6_CFG
+        Gr00tN1d6ActionHead_CFG = cfg_module.Gr00tN1d6ActionHead_CFG
+        Gr00t_N1d6_Policy_CFG = cfg_module.Gr00t_N1d6_Policy_CFG
+
+        policy._get_action = types.MethodType(Gr00t_N1d6_Policy_CFG._get_action, policy)
+        policy.get_action = types.MethodType(Gr00t_N1d6_Policy_CFG.get_action, policy)
+        policy.model.get_action = types.MethodType(GR00T_N1d6_CFG.get_action, policy.model)
+        policy.model.action_head.get_action_with_features = types.MethodType(Gr00tN1d6ActionHead_CFG.get_action_with_features, policy.model.action_head)
+        policy.model.action_head.get_action = types.MethodType(Gr00tN1d6ActionHead_CFG.get_action, policy.model.action_head)
+
+    if guidance=='wng':
+        try: 
+            guidance_module = importlib.import_module("robomimic.algo.guidance.white_noise_grootn1d6")
+        except ImportError:
+            # Support running this file directly by adding sibling libs/robomimic.
+            robomimic_repo = Path(__file__).resolve().parents[2].parent / "robomimic"
+            if str(robomimic_repo) not in sys.path:
+                sys.path.insert(0, str(robomimic_repo))
+        wng_module = importlib.import_module("robomimic.algo.guidance.white_noise_grootn1d6")
+
+        GR00T_N1d6_WNG = wng_module.GR00T_N1d6_WNG
+        Gr00tN1d6ActionHead_WNG = wng_module.Gr00tN1d6ActionHead_WNG
+        Gr00t_N1d6_Policy_WNG = wng_module.Gr00t_N1d6_Policy_WNG
+
+        policy._get_action = types.MethodType(Gr00t_N1d6_Policy_WNG._get_action, policy)
+        policy.get_action = types.MethodType(Gr00t_N1d6_Policy_WNG.get_action, policy)
+        policy.model.get_action = types.MethodType(GR00T_N1d6_WNG.get_action, policy.model)
+        policy.model.action_head.get_action_with_features = types.MethodType(Gr00tN1d6ActionHead_WNG.get_action_with_features, policy.model.action_head)
+        policy.model.action_head.get_action = types.MethodType(Gr00tN1d6ActionHead_WNG.get_action, policy.model.action_head)
 
     return policy
 
@@ -87,6 +135,12 @@ def main(config: ServerConfig):
     print(f"  Device: {config.device}")
     print(f"  Host: {config.host}")
     print(f"  Port: {config.port}")
+
+    if config.device.startswith("cuda") and not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA device requested but unavailable in this shell. "
+            "Run on a GPU node with NVIDIA driver access (or pass --device cpu)."
+        )
 
     # check if the model path exists
     if config.model_path.startswith("/") and not os.path.exists(config.model_path):
@@ -116,10 +170,13 @@ def main(config: ServerConfig):
         )
     else:
         raise ValueError("Either model_path or dataset_path must be provided")
-    
-    # Modify policy for ACG guidance if needed
-    if config.use_acg_guidance:
-        policy = modified_policy_for_acg(policy)
+
+    print(config.guidance)
+    if config.use_guidance:
+        if config.guidance in ['acg', 'cfg', 'wng']:
+            policy = modified_policy(policy, config.guidance)
+        else:
+            raise ValueError("Missing or incorrect guidance type.")
 
     # Apply sim policy wrapper if needed
     if config.use_sim_policy_wrapper:

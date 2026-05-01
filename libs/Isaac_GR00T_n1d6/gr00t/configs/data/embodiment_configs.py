@@ -141,7 +141,7 @@ MODALITY_CONFIGS = {
             ],
         ),
         "action": ModalityConfig(
-            delta_indices=list(range(0, 8)),
+            delta_indices=list(range(0, 30)),
             modality_keys=[
                 "x",
                 "y",
@@ -184,7 +184,7 @@ MODALITY_CONFIGS = {
             ],
         ),
         "action": ModalityConfig(
-            delta_indices=list(range(0, 8)),
+            delta_indices=list(range(0, 30)),
             modality_keys=[
                 "x",
                 "y",

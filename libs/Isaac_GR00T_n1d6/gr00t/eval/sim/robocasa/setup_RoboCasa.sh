@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -ux pipefail
 
 # Where this script lives (put it inside your repo)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -20,14 +20,14 @@ uv pip install setuptools wheel
 # Core deps
 uv pip install torch==2.5.1 torchvision==0.20.1
 # Linux-only: preinstall flash-attn to avoid compiling inside other wheels
-INSTALL_FLASH_ATTN=${INSTALL_FLASH_ATTN:-1}
-if [[ "$(uname -s)" == "Linux" && "$INSTALL_FLASH_ATTN" == "1" ]]; then
-  uv pip install --no-build-isolation flash-attn==2.7.4.post1 || echo "flash-attn install skipped/failed; continuing"
-fi
+# INSTALL_FLASH_ATTN=${INSTALL_FLASH_ATTN:-1}
+# if [[ "$(uname -s)" == "Linux" && "$INSTALL_FLASH_ATTN" == "1" ]]; then
+#   uv pip install --no-build-isolation flash-attn==2.7.4.post1 || echo "flash-attn install skipped/failed; continuing"
+# fi
 
 # Sim stack
 uv pip install "git+https://github.com/ARISE-Initiative/robosuite.git@master"
-uv pip install -e "$ROBOCASA_REPO" --config-settings editable_mode=compat
+uv pip install -e "$ROBOCASA_REPO" --no-deps
 uv pip install gymnasium==0.29.1 pydantic av==15.0.0 zmq transformers==4.51.3 msgpack==1.1.0 msgpack-numpy==0.4.8
 
 # Make your project importable in this venv without re-resolving deps
@@ -62,6 +62,7 @@ os.environ.setdefault("PYOPENGL_PLATFORM", "egl")
 import gymnasium as gym, robocasa, robosuite
 import robocasa.utils.gym_utils.gymnasium_groot
 print("Imports OK:", robosuite.__version__)
-env = gym.make("robocasa_panda_omron/OpenSingleDoor_PandaOmron_Env", enable_render=True)
+env = gym.make("robocasa_panda_omron/CoffeeSetupMug_PandaOmron_Env", enable_render=True)
 print("Env OK:", type(env))
 PY
+

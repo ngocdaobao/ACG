@@ -394,12 +394,6 @@ class BaseEnv(gym.Env):
         pass
 
     def _setup_cameras(self):
-        # Compatibility mode for machines where Vulkan camera rendering crashes.
-        if os.getenv("MS2_DISABLE_CAMERAS", "0") == "1":
-            self._cameras = OrderedDict()
-            self._render_cameras = OrderedDict()
-            return
-
         self._cameras = OrderedDict()
         for uid, camera_cfg in self._camera_cfgs.items():
             if uid in self._agent_camera_cfgs:

@@ -14,8 +14,7 @@ import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel, PreTrainedModel
 from transformers.feature_extraction_utils import BatchFeature
 import tree
-
-
+ 
 class Gr00tN1d6ActionHead(nn.Module):
     """Action head component for flow matching diffusion policy."""
 
@@ -268,7 +267,7 @@ class Gr00tN1d6ActionHead(nn.Module):
             action_input: Input containing:
                 - state: [B, state_dim]
                 - embodiment_id: [B] (embodiment IDs)
-
+ 
         Returns:
             BatchFeature containing:
                 - backbone_features: [B, seq_len, backbone_embedding_dim]

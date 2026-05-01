@@ -81,11 +81,6 @@ def make(task_name):
     assert task_name in ENVIRONMENTS, f"Task {task_name} is not supported. Environments: \n {ENVIRONMENTS}"
     env_name, kwargs = ENVIRONMENT_MAP[task_name]
     kwargs["prepackaged_config"] = True
-    # Enforce headless/offscreen rendering in server environments.
-    kwargs.setdefault("renderer", "sapien")
-    renderer_kwargs = dict(kwargs.get("renderer_kwargs", {}))
-    renderer_kwargs.setdefault("offscreen_only", True)
-    kwargs["renderer_kwargs"] = renderer_kwargs
     env = gym.make(env_name, obs_mode="rgbd", **kwargs)
     print(f"  \n\n - Created environment {env_name}")
     return env

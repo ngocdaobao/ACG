@@ -39,6 +39,9 @@ def main(args):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
+    # cuDNN SDPA requires libnvrtc which may be absent on some clusters; fall back to flash/mem-efficient
+    torch.backends.cuda.enable_cudnn_sdp(False)
+
     # devices
     device = torch.device(f"cuda:{args.gpu_id}")
 
@@ -80,89 +83,92 @@ def main(args):
     env_adapter = hydra.utils.instantiate(cfg.env.adapter)
     env_adapter.reset()
 
+    success_count = 0
     # run an episode
-    episode_id = random.randint(0, 20)
-    env_reset_options = {}
-    env_reset_options["obj_init_options"] = {
-        "episode_id": episode_id,  # this determines the obj inits in bridge
-    }
-    obs, reset_info = env.reset(options=env_reset_options)
-    instruction = env.get_language_instruction()
-    if args.recording:
-        os.environ["TOKENIZERS_PARALLELISM"] = (
-            "false"  # avoid tokenizer forking warning about deadlock
-        )
-        video_writer = imageio.get_writer(f"try_{args.task}_{episode_id}.mp4")
-    print(
-        f"Reset info: {reset_info} Instruction: {instruction} Max episode length: {env.spec.max_episode_steps}"
-    )
-    cnt_step = 0
-    inference_times = []
-    while 1:
-        # infer action chunk
-        inputs = env_adapter.preprocess(env, obs, instruction)
-        causal_mask, vlm_position_ids, proprio_position_ids, action_position_ids = (
-            model.build_causal_mask_and_position_ids(
-                inputs["attention_mask"], dtype=dtype
-            )
-        )
-        image_text_proprio_mask, action_mask = model.split_full_mask_into_submasks(
-            causal_mask
-        )
-        inputs = {
-            "input_ids": inputs["input_ids"],
-            "pixel_values": inputs["pixel_values"].to(dtype),
-            "image_text_proprio_mask": image_text_proprio_mask,
-            "action_mask": action_mask,
-            "vlm_position_ids": vlm_position_ids,
-            "proprio_position_ids": proprio_position_ids,
-            "action_position_ids": action_position_ids,
-            "proprios": inputs["proprios"].to(dtype),
+    for episode_id in range(args.n_eps):  # max episode id in bridge is 99
+        env_reset_options = {}
+        env_reset_options["obj_init_options"] = {
+            "episode_id": episode_id,  # this determines the obj inits in bridge
         }
-        inputs = {k: v.to(device) for k, v in inputs.items()}
-        start_inference_time = time.time()
-        with torch.inference_mode():  # speeds up
-            actions = model(**inputs)
-        if cnt_step > 0:
-            inference_times.append(time.time() - start_inference_time)
-        env_actions = env_adapter.postprocess(actions[0].float().cpu().numpy())
+        obs, reset_info = env.reset(options=env_reset_options)
+        instruction = env.get_language_instruction()
+        if args.recording:
+            os.environ["TOKENIZERS_PARALLELISM"] = (
+                "false"  # avoid tokenizer forking warning about deadlock
+            )
+            video_writer = imageio.get_writer(f"{args.output_dir}/try_{args.task}_{episode_id}.mp4")
+        print(
+            f"Reset info: {reset_info} Instruction: {instruction} Max episode length: {env.spec.max_episode_steps}"
+        )
+        cnt_step = 0
+        inference_times = []
+        while 1:
+            # infer action chunk
+            inputs = env_adapter.preprocess(env, obs, instruction)
+            causal_mask, vlm_position_ids, proprio_position_ids, action_position_ids = (
+                model.build_causal_mask_and_position_ids(
+                    inputs["attention_mask"], dtype=dtype
+                )
+            )
+            image_text_proprio_mask, action_mask = model.split_full_mask_into_submasks(
+                causal_mask
+            )
+            inputs = {
+                "input_ids": inputs["input_ids"],
+                "pixel_values": inputs["pixel_values"].to(dtype),
+                "image_text_proprio_mask": image_text_proprio_mask,
+                "action_mask": action_mask,
+                "vlm_position_ids": vlm_position_ids,
+                "proprio_position_ids": proprio_position_ids,
+                "action_position_ids": action_position_ids,
+                "proprios": inputs["proprios"].to(dtype),
+            }
+            inputs = {k: v.to(device) for k, v in inputs.items()}
+            start_inference_time = time.time()
+            with torch.inference_mode():  # speeds up
+                actions = model(**inputs)
+            if cnt_step > 0:
+                inference_times.append(time.time() - start_inference_time)
+            env_actions = env_adapter.postprocess(actions[0].float().cpu().numpy())
 
-        # environment step
-        for env_action in env_actions[: cfg.act_steps]:
-            obs, reward, success, truncated, info = env.step(env_action)
-            cnt_step += 1
+            # environment step
+            for env_action in env_actions[: args.n_steps]:  # execute only n steps of the predicted action chunk
+                obs, reward, success, truncated, info = env.step(env_action)
+                cnt_step += 1
+                if truncated:
+                    break
+
+            # save frame
+            if args.recording:
+                video_writer.append_data(env_adapter.get_video_frame(env, obs))
+
+            # update instruction in long horizon tasks, e.g., pick apple ---> put in top drawer
+            new_instruction = env.get_language_instruction()
+            if new_instruction != instruction:
+                instruction = new_instruction
+
+            # original octo eval only done when timeout, i.e., not upon success
             if truncated:
+                if args.recording:
+                    video_writer.close()
                 break
 
-        # save frame
-        if args.recording:
-            video_writer.append_data(env_adapter.get_video_frame(env, obs))
-
-        # update instruction in long horizon tasks, e.g., pick apple ---> put in top drawer
-        new_instruction = env.get_language_instruction()
-        if new_instruction != instruction:
-            instruction = new_instruction
-
-        # original octo eval only done when timeout, i.e., not upon success
-        if truncated:
-            if args.recording:
-                video_writer.close()
-            break
+            success_count += success
 
     # summary
     print("\n\n============ Summary ============")
     print(f"Checkpoint: {args.checkpoint_path}")
     print(f"Action chunk steps (predicted): {cfg.horizon_steps}")
-    print(f"Action chunk steps (executed): {cfg.act_steps}")
+    print(f"Action chunk steps (executed): {args.n_steps}")
     print(f"Avg inference time (excluding first step): {np.mean(inference_times):.3f}s")
     print(
         f"Peak VRAM usage: {torch.cuda.max_memory_reserved(args.gpu_id) / 1024 ** 3:.2f} GB"
     )
     print(f"Task: {args.task}")
     print(f"Total environment steps: {cnt_step}")
-    print(f"Success: {success}")
+    print(f"Success: {success_count/args.n_eps}")
     if args.recording:
-        print(f"Video saved as try_{args.task}_{episode_id}.mp4")
+        print(f"Video saved as {args.output_dir}/try_{args.task}_{episode_id}.mp4")
     print("======================================\n\n")
 
 
@@ -195,6 +201,8 @@ if __name__ == "__main__":
     parser.add_argument("--use_torch_compile", action="store_true")
     parser.add_argument("--recording", action="store_true")
     parser.add_argument("--guidance", type=str, default=None, choices=[None, "acg", "cfg", "wng"])
+    parser.add_argument("--n_eps", type=int, default=50)
+    parser.add_argument("--n_steps", type=int, default=4)
     args = parser.parse_args()
 
     # check task

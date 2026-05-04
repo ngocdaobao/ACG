@@ -1,6 +1,8 @@
 
 export CUDA_VISIBLE_DEVICES=0
 
+guidance=acg
+
 TASKS=(
 robocasa_panda_omron/CoffeeSetupMug_PandaOmron_Env	
 robocasa_panda_omron/CoffeeServeMug_PandaOmron_Env	
@@ -43,7 +45,7 @@ for seed in "${SEEDS[@]}"; do
         for TASK in "${TASKS[@]}"; do
 
             NAME=$(basename "$TASK")
-            LOG_DIR="ACG/output/cfg/robocasa/nenvs${N_envs}_eps${EPISODES}_ah${action_horizon}/$NAME/seed${seed}"
+            LOG_DIR="ACG/output/${guidance}/robocasa/nenvs${N_envs}_eps${EPISODES}_ah${action_horizon}/$NAME/seed${seed}"
             VIDEO_DIR="$LOG_DIR/videos"
             mkdir -p "$LOG_DIR"
             mkdir -p "$VIDEO_DIR"

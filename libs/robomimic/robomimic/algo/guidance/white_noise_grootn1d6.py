@@ -136,7 +136,7 @@ class Gr00tN1d6ActionHead_WNG(Gr00tN1d6ActionHead):
         noise_std: float = 1.0,
         **kwargs,
     ) -> BatchFeature:
-        print('use wng')
+
         def convert_to_bad_model(skip_blocks: List[int] = [0, 8, 16, 24]) -> None:
             n_blocks = len(self.model.transformer_blocks)
             for i in range(n_blocks):

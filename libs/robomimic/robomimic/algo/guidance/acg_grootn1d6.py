@@ -281,7 +281,7 @@ class Gr00tN1d6ActionHead_ACG(Gr00tN1d6ActionHead):
         scale: float = 3.0,
         skip_blocks: List[int] = [27, 29, 31],
     ) -> BatchFeature:
-        print('use acg')
+
         features = self._encode_features(backbone_output, action_input)
         return self.get_action_with_features(
             backbone_features=features.backbone_features,

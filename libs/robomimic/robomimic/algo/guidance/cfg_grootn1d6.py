@@ -143,7 +143,7 @@ class Gr00tN1d6ActionHead_CFG(Gr00tN1d6ActionHead):
         backbone_output_uncond: BatchFeature,
         scale: float = 7.0,
     ) -> BatchFeature:
-        print('use cfg')
+
         # Get vision and language embeddings.
         vl_embeds = backbone_features  # (B, 99, 1536)
         vl_embeds_uncond = backbone_features_uncond  # (B, 99, 1536)
